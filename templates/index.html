@@ -1,0 +1,21 @@
+{{template "base" .}}
+
+{{define "title"}}Blog of the Ryo{{end}}
+
+{{define "content"}}
+<section class="post-list">
+  <h1 class="page-heading">Posts</h1>
+  {{if .Posts}}
+    {{range .Posts}}
+    <article class="post-summary">
+      <h2><a href="/posts/{{.Slug}}">{{.Title}}</a></h2>
+      {{if not .Date.IsZero}}
+      <time class="post-date" datetime="{{formatDate .Date}}">{{formatDate .Date}}</time>
+      {{end}}
+    </article>
+    {{end}}
+  {{else}}
+    <p class="empty">まだ記事がありません。</p>
+  {{end}}
+</section>
+{{end}}

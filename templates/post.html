@@ -1,0 +1,20 @@
+{{template "base" .}}
+
+{{define "title"}}{{.Post.Title}} - Blog of the Ryo{{end}}
+
+{{define "content"}}
+<article class="post">
+  <header class="post-header">
+    <h1 class="post-title">{{.Post.Title}}</h1>
+    {{if not .Post.Date.IsZero}}
+    <time class="post-date" datetime="{{formatDate .Post.Date}}">{{formatDate .Post.Date}}</time>
+    {{end}}
+  </header>
+  <div class="post-content">
+    {{.Post.Content}}
+  </div>
+  <footer class="post-footer">
+    <a href="/">&larr; 記事一覧に戻る</a>
+  </footer>
+</article>
+{{end}}
