@@ -53,6 +53,17 @@ images/my-photo.png
 ![説明文](/images/my-photo.png)
 ```
 
+## Docker
+
+GHCRからイメージを取得して起動できます。
+
+```bash
+docker pull ghcr.io/ryomasumura1201/blog-of-the-ryo:latest
+docker run -p 8080:8080 ghcr.io/ryomasumura1201/blog-of-the-ryo:latest
+```
+
+ブラウザで http://localhost:8080 にアクセスしてください。
+
 ## プロジェクト構成
 
 ```
