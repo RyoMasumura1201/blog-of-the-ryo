@@ -41,12 +41,25 @@ date: 2024-04-01
 
 コードブロックはシンタックスハイライト付きでレンダリングされます。
 
+## 画像の使い方
+
+`images/` ディレクトリに画像ファイルを置き、記事中で `/images/ファイル名` を参照します。
+
+```bash
+images/my-photo.png
+```
+
+```markdown
+![説明文](/images/my-photo.png)
+```
+
 ## プロジェクト構成
 
 ```
 .
 ├── main.go          # HTTPサーバー
 ├── posts/           # Markdownの記事ファイル
+├── images/          # 画像ファイル
 ├── templates/       # HTMLテンプレート
 │   ├── base.html
 │   ├── index.html

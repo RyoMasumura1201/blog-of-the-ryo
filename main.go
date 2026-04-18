@@ -157,6 +157,7 @@ func main() {
 
 	// Static assets
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
 
 	// Index page
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
