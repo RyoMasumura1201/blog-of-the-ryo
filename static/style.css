@@ -217,8 +217,43 @@ main.container {
   color: #c7254e;
 }
 
-/* ===== Code Block (Chroma) ===== */
-.post-content pre {
+/* ===== Code Block ===== */
+.code-block {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 1.5rem 0;
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.code-filename {
+  background: #e8edf2;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.3rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+.code-block pre {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+}
+
+.code-block pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* Fallback for indented code blocks */
+.post-content > pre {
   background: #f6f8fa;
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -229,21 +264,12 @@ main.container {
   line-height: 1.65;
 }
 
-.post-content pre code {
+.post-content > pre code {
   background: none;
   border: none;
   padding: 0;
   color: inherit;
   font-size: inherit;
-}
-
-/* Chroma wrapper */
-.post-content .chroma {
-  background: #f6f8fa;
-  border-radius: 8px;
-  border: 1px solid var(--color-border);
-  overflow: hidden;
-  margin: 1.5rem 0;
 }
 
 /* ===== Images ===== */

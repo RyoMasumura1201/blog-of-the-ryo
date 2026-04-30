@@ -11,13 +11,17 @@ import (
 	"strings"
 	"time"
 
-	highlighting "github.com/yuin/goldmark-highlighting/v2"
-
+	chroma "github.com/alecthomas/chroma/v2"
+	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
+	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer"
 	"github.com/yuin/goldmark/renderer/html"
+	"github.com/yuin/goldmark/util"
 )
 
 type Post struct {
@@ -33,6 +37,73 @@ type PageData struct {
 	Post  *Post
 }
 
+// codeBlockRenderer handles fenced code blocks.
+// Info string format: "lang" or "lang:filename"
+type codeBlockRenderer struct{}
+
+func (r *codeBlockRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
+	reg.Register(ast.KindFencedCodeBlock, r.render)
+}
+
+func (r *codeBlockRenderer) render(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
+	if !entering {
+		return ast.WalkContinue, nil
+	}
+
+	n := node.(*ast.FencedCodeBlock)
+
+	var lang, filename string
+	if n.Info != nil {
+		info := strings.TrimSpace(string(n.Info.Segment.Value(source)))
+		if idx := strings.IndexByte(info, ':'); idx >= 0 {
+			lang = info[:idx]
+			filename = strings.TrimSpace(info[idx+1:])
+		} else {
+			lang = info
+		}
+	}
+
+	var codeBuf strings.Builder
+	lines := n.Lines()
+	for i := 0; i < lines.Len(); i++ {
+		line := lines.At(i)
+		codeBuf.Write(line.Value(source))
+	}
+	code := codeBuf.String()
+
+	lexer := lexers.Get(lang)
+	if lexer == nil {
+		lexer = lexers.Analyse(code)
+	}
+	if lexer == nil {
+		lexer = lexers.Fallback
+	}
+	lexer = chroma.Coalesce(lexer)
+
+	style := styles.Get("github")
+	if style == nil {
+		style = styles.Fallback
+	}
+
+	w.WriteString(`<div class="code-block">`)
+	if filename != "" {
+		w.WriteString(`<div class="code-filename">`)
+		template.HTMLEscape(w, []byte(filename))
+		w.WriteString(`</div>`)
+	}
+
+	iter, err := lexer.Tokenise(nil, code)
+	if err == nil {
+		var buf bytes.Buffer
+		if fmtErr := chromahtml.New(chromahtml.TabWidth(4)).Format(&buf, style, iter); fmtErr == nil {
+			w.Write(buf.Bytes())
+		}
+	}
+
+	w.WriteString(`</div>`)
+	return ast.WalkContinue, nil
+}
+
 var md goldmark.Markdown
 
 func init() {
@@ -40,10 +111,6 @@ func init() {
 		goldmark.WithExtensions(
 			extension.GFM,
 			extension.Table,
-			highlighting.NewHighlighting(
-				highlighting.WithStyle("github"),
-				highlighting.WithGuessLanguage(true),
-			),
 		),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
@@ -52,12 +119,13 @@ func init() {
 			html.WithHardWraps(),
 			html.WithXHTML(),
 			html.WithUnsafe(),
+			renderer.WithNodeRenderers(
+				util.Prioritized(&codeBlockRenderer{}, 200),
+			),
 		),
 	)
 }
 
-// parsePost reads a markdown file and parses front matter (title, date).
-// Front matter is expected as the first lines starting with "# Title" and "date: YYYY-MM-DD".
 func parsePost(slug, content string) (*Post, error) {
 	lines := strings.Split(content, "\n")
 	title := slug
@@ -131,18 +199,8 @@ func loadPosts(dir string) ([]*Post, error) {
 	return posts, nil
 }
 
-func chromaCSS() template.CSS {
-	style := styles.Get("github")
-	if style == nil {
-		style = styles.Fallback
-	}
-	// Return empty; chroma inlines styles when using WithClasses(false) (default)
-	return ""
-}
-
 func main() {
 	tmplFuncs := template.FuncMap{
-		"chromaCSS":  chromaCSS,
 		"formatDate": func(t time.Time) string { return t.Format("2006-01-02") },
 	}
 
@@ -155,11 +213,9 @@ func main() {
 		"templates/base.html",
 	))
 
-	// Static assets
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.Handle("/images/", http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
 
-	// Index page
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
@@ -175,7 +231,6 @@ func main() {
 		}
 	})
 
-	// Individual post page
 	http.HandleFunc("/posts/", func(w http.ResponseWriter, r *http.Request) {
 		slug := strings.TrimPrefix(r.URL.Path, "/posts/")
 		slug = strings.TrimSuffix(slug, "/")
