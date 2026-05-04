@@ -40,7 +40,7 @@ wg genkey | tee preshared.key
 ```
 
 VPS側の設定ファイル（/etc/wireguard/wg0.conf）を作成します。
-```ini
+```ini:/etc/wireguard/wg0.conf
 [Interface]
 Address = 10.0.0.1/24
 # WireGuardのインターフェースが起動した後に実行されるシェルコマンド。ens3から出るパケットの送信元IPをVPSのIPに書き換え(NAT)、ens3に届いたパケットをVPN内のラズパイに転送している。
@@ -57,7 +57,7 @@ AllowedIPs = 10.0.0.2/32
 ```
 
 ラズパイ側の設定ファイルを作成します。
-```
+```ini:/etc/wireguard/wg0.conf
 [Interface]
 Address = 10.0.0.2/24
 PrivateKey = [client.key]
@@ -88,7 +88,7 @@ L7proxyとしてTraefikを使っています。ブログサイトもTraefikもDo
 Traefikはコンテナに専用のラベルをつけることで、ルーティングなども設定を行うことができます。
 以下のような感じです。
 
-```yml
+```yml:docker-compose.yml
 services:
   traefik:
     image: traefik:v3.6
